@@ -1,13 +1,14 @@
 package main
 
 import (
+	"io"
 	"net/http"
 	"fmt"
 	"io/ioutil"
-	// "strings"
 	"strconv"
 	"encoding/json"
-	// "reflect"
+	"os"
+	"log"
 )
 
 const (
@@ -49,13 +50,22 @@ func main(){
 	platform_cost := float64(deposit_ust) * deposit_apy_float
 	revenue := beth_profit + bluna_profit + loan_profit - platform_cost
 
-	fmt.Printf("Yield Reserve:%d\nDeposited ust:%d\nbeth Value:%.02f\nbluna Value:%.02f\nborrowed ust:%d\n",yield_reserve, deposit_ust,float64(beth_Collateral*beth_price),float64(bluna_Collateral*bluna_price),borrowed_ust)
-	fmt.Println("-------------------------")
-	fmt.Println("total profit  :",int(total_profit))
-	fmt.Println("platform_cost :",int(platform_cost))
-	fmt.Println("Total Revenue :",int(revenue))
-	fmt.Printf("平台的deposit apy收益應該要是 %.02f ％而不是 %.02f ％才能打平\n",(total_profit/float64(deposit_ust)*100),deposit_apy_float*100)
-	fmt.Printf("照這樣下去的話，在%d天Terra就要開始負債囉~",(-int(revenue)/yield_reserve))
+	logFile, err := os.OpenFile("logfile.log", os.O_RDWR|os.O_CREATE|os.O_APPEND,0666)
+	if err != nil{
+		log.Fatalf("file open error: %v", err)
+	}
+	defer logFile.Close()
+	console := io.MultiWriter(os.Stdout,logFile)
+	log.SetOutput(console)
+	
+
+	log.Printf("Yield Reserve : %d\nDeposited ust : %d\nbeth Value    : %.02f\nbluna Value   : %.02f\nborrowed ust  : %d\n",yield_reserve, deposit_ust,float64(beth_Collateral*beth_price),float64(bluna_Collateral*bluna_price),borrowed_ust)
+	log.Println("-------------------------")
+	log.Println("total profit  :",int(total_profit))
+	log.Println("platform_cost :",int(platform_cost))
+	log.Println("Total Revenue :",int(revenue))
+	log.Printf("平台的deposit apy收益應該要是 %.02f ％而不是 %.02f ％才能打平\n",(total_profit/float64(deposit_ust)*100),deposit_apy_float*100)
+	log.Printf("照這樣下去的話，在%.02f天Terra就要開始負債囉~", (float64(yield_reserve)/(-revenue/365)))
 }
 
 func getApiResult(url string) string{
