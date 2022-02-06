@@ -2,13 +2,15 @@ package main
 
 import (
 	"io"
+	"os"
 	"net/http"
 	"fmt"
 	"io/ioutil"
 	"strconv"
 	"encoding/json"
-	"os"
 	"log"
+
+	"anchorCrawler/hcrawler"
 )
 
 const (
@@ -22,13 +24,15 @@ const (
 )
 
 func main(){
+
+	MarketInfo := hcrawler.GetMarketInfo()
+
 	yield_reserve_res := getApiResult(ust_api)
 	deposit_ust_api_res := getApiResult(deposit_api)
 	beth_api_res := getApiResult(beth_api)
 	bluna_api_res := getApiResult(bluna_api)
 	borrow_api_res := getApiResult(borrow_api)
 	anc_res := getApiResult(ancPrice_api)
-	fmt.Println(anc_res)
 	yield_reserve := parseResult(yield_reserve_res,"overseer_ust_balance")/1000000
 	deposit_ust := parseResult(deposit_ust_api_res,"total_ust_deposits")/1000000
 	borrowed_ust := parseResult(borrow_api_res,"total_borrowed")/1000000
@@ -50,7 +54,6 @@ func main(){
 	bluna_profit := float64(bluna_Collateral)*bLuna_rate
 	loan_profit := float64(borrowed_ust)*borrow_rate
 	total_profit := beth_profit + bluna_profit + loan_profit
-
 	platform_cost := float64(deposit_ust) * deposit_apy_float
 	revenue := beth_profit + bluna_profit + loan_profit - platform_cost
 
@@ -62,7 +65,6 @@ func main(){
 	console := io.MultiWriter(os.Stdout,logFile)
 	log.SetOutput(console)
 	
-
 	log.Printf("\nYield Reserve    : %d\nDeposited ust    : %d\nbeth Collateral  : %.02f\nbluna Collateral : %.02f\nborrowed ust     : %d\nborrowed rate : %.04f\nbEth_rate     : %.04f\nbluna_rate    : %.04f\nanc_price     : %.04f",
 			yield_reserve, 
 			deposit_ust,
@@ -74,6 +76,11 @@ func main(){
 			bLuna_rate,
 			anc_price,
 		)
+	log.Println("-------------------------")
+	log.Println("UST當前市場總市值  :",MarketInfo.UstTotalSupply)
+	log.Println("Lunna當前市場總市值:",MarketInfo.LunnaMarketCap)
+	log.Println("Lunna當前市場流通量:",MarketInfo.LunnaMarketSupply)
+	log.Println("Lunna總發行量      :",MarketInfo.LunnaTotalSupply)
 	log.Println("-------------------------")
 	log.Println("total profit  :",int(total_profit))
 	log.Println("platform_cost :",int(platform_cost))
