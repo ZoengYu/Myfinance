@@ -1,14 +1,14 @@
 package main
 
 import (
-	"io"
-	"os"
-	"net/http"
-	"fmt"
-	"io/ioutil"
-	"strconv"
 	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"os"
+	"strconv"
 
 	"anchorCrawler/hcrawler"
 )
@@ -39,19 +39,19 @@ func main(){
 	beth_Collateral := parseResult(beth_api_res,"total_collateral")/1000000
 	bluna_Collateral := parseResult(bluna_api_res,"total_collateral")/1000000
 //collateral already contain whole value of the assets
-	// beth_price := parseResult(beth_api_res,"beth_price")
-	// bluna_price := parseResult(bluna_api_res,"bLuna_price")
+	beth_price := parseResult(beth_api_res,"beth_price")
+	bluna_price := parseResult(bluna_api_res,"bLuna_price")
 
 	bEth_rate := 4.60/100
 	bLuna_rate := 9.7/100
 	borrow_rate := 12.11/100
-		//To do 目前把浮點數加工x10000在除以10000來保留小數點後兩位 肯定有更好的方式～
+
 	deposit_apy := parseResult(yield_reserve_res,"deposit_apy")
 	deposit_apy_float := float64(deposit_apy)/10000
-	anc_price := float64(parseResult(anc_res,"anc_price"))/10000
+	anc_price := float64(parseResult(anc_res,"anc_price"))
 
-	beth_profit := float64(beth_Collateral)*bEth_rate
-	bluna_profit := float64(bluna_Collateral)*bLuna_rate
+	beth_profit := float64(beth_Collateral)*float64(beth_price)*bEth_rate
+	bluna_profit := float64(bluna_Collateral)*float64(bluna_price)*bLuna_rate
 	loan_profit := float64(borrowed_ust)*borrow_rate
 	total_profit := beth_profit + bluna_profit + loan_profit
 	platform_cost := float64(deposit_ust) * deposit_apy_float
@@ -66,17 +66,18 @@ func main(){
 	log.SetOutput(console)
 	
 	log.Printf("\nYield Reserve    : %d\nDeposited ust    : %d\nbeth Collateral  : %.02f\nbluna Collateral : %.02f\nborrowed ust     : %d\nborrowed rate : %.04f\nbEth_rate     : %.04f\nbluna_rate    : %.04f\nanc_price     : %.04f",
-			yield_reserve, 
-			deposit_ust,
+			int(yield_reserve), 
+			int(deposit_ust),
 			float64(beth_Collateral),
 			float64(bluna_Collateral),
-			borrowed_ust,
+			int(borrowed_ust),
 			borrow_rate,
 			bEth_rate,
 			bLuna_rate,
 			anc_price,
 		)
 	log.Println("-------------------------")
+	log.Println("UST當前價格        :",MarketInfo.UstPrice)
 	log.Println("UST當前市場總市值  :",MarketInfo.UstTotalSupply)
 	log.Println("Lunna當前市場總市值:",MarketInfo.LunnaMarketCap)
 	log.Println("Lunna當前市場流通量:",MarketInfo.LunnaMarketSupply)
@@ -100,7 +101,7 @@ func getApiResult(url string) string{
 	return string(result)
 }
 
-func parseResult(result string, key string) int{
+func parseResult(result string, key string) float64{
 	
 	var raw map[string]json.RawMessage
 	json.Unmarshal([]byte(result),&raw)
@@ -121,9 +122,9 @@ func parseResult(result string, key string) int{
 	if err != nil {
 		float_answer, _ := strconv.ParseFloat(remaining_ust,64)
 		if int(float_answer) == 0 || int(float_answer) == 1 {
-			return int(float_answer*10000)
+			return float_answer
 		}
-		return int(float_answer)
+		return float_answer
 	}
-	return answer
+	return float64(answer)
 }

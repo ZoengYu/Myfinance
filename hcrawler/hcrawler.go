@@ -10,6 +10,7 @@ const (
 )
 
 type Supply struct {
+	UstPrice					string
 	UstMarketSupply   string
 	UstTotalSupply    string
 	LunnaMarketCap		string
@@ -19,10 +20,12 @@ type Supply struct {
 
 func GetMarketInfo() Supply {
 	ustRes := WebScraper(ustUrl,".statsContainer .statsValue")
+	ustPrice := WebScraper(ustUrl,".priceSection .priceValue")
 	terraRes := WebScraper(terraLunaUrl,".statsContainer .statsValue")
 	terraRes2 := WebScraper(terraLunaUrl,".statsContainer .maxSupplyValue")
 
 	return Supply{
+		UstPrice					: ustPrice[0],
 		UstMarketSupply   : ustRes[4],
 		UstTotalSupply    : ustRes[4],
 		LunnaMarketCap    : terraRes[0],
